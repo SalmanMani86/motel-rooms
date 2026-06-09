@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Room</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      padding: 40px 48px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+      max-width: 320px;
+      width: 100%;
+    }
+
+    .room-icon {
+      font-size: 2.4rem;
+      margin-bottom: 12px;
+    }
+
+    .room-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #a0aec0;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 6px;
+    }
+
+    .room-number {
+      font-size: 5rem;
+      font-weight: 800;
+      color: #3b82f6;
+      line-height: 1;
+      margin-bottom: 16px;
+    }
+
+    .guest-label {
+      font-size: 0.72rem;
+      color: #a0aec0;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 4px;
+    }
+
+    .guest-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #2d3748;
+    }
+
+    .guest-name.vacant {
+      color: #cbd5e0;
+      font-style: italic;
+      font-weight: 400;
+    }
+
+    .divider {
+      width: 40px;
+      height: 3px;
+      background: #3b82f6;
+      border-radius: 2px;
+      margin: 20px auto;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 28px;
+      font-size: 0.8rem;
+      color: #718096;
+      text-decoration: none;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      padding: 8px 20px;
+      background: #fff;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .back-link:hover {
+      color: #3b82f6;
+      border-color: #93c5fd;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="room-icon">🚪</div>
+    <div class="room-label">Room</div>
+    <div class="room-number" id="roomNum">—</div>
+    <div class="divider"></div>
+    <div class="guest-label">Guest</div>
+    <div class="guest-name" id="guestName">Loading...</div>
+  </div>
+
+  <a class="back-link" href="index.html">← Back to Directory</a>
+
+  <script>
+    // Read room number from URL: room.html?r=3
+    const params = new URLSearchParams(window.location.search);
+    const roomNum = parseInt(params.get('r'));
+
+    if (!roomNum || roomNum < 1 || roomNum > 10) {
+      document.getElementById('roomNum').textContent = '?';
+      document.getElementById('guestName').textContent = 'Invalid room';
+    } else {
+      document.title = 'Room ' + roomNum;
+      document.getElementById('roomNum').textContent = roomNum;
+
+      const stored = localStorage.getItem('motel_names');
+      const names = stored ? JSON.parse(stored) : [];
+      const entry = names.find(function(n) { return n.room === roomNum; });
+      const name = entry && entry.name ? entry.name.trim() : '';
+
+      const el = document.getElementById('guestName');
+      if (name) {
+        el.textContent = name;
+      } else {
+        el.textContent = 'Vacant';
+        el.classList.add('vacant');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Room Directory</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f1f5f9;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden; /* prevent body scroll — inner list scrolls */
+    }
+
+    /* ── Fixed top bar ── */
+    .topbar {
+      width: 100%;
+      background: #1e3a8a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      height: 56px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      z-index: 10;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .topbar-left span.icon { font-size: 1.25rem; }
+
+    .topbar-left span.title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.2px;
+    }
+
+    .staff-btn {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border: 1.5px solid rgba(255,255,255,0.3);
+      border-radius: 20px;
+      padding: 6px 14px;
+      text-decoration: none;
+      letter-spacing: 0.2px;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .staff-btn:hover { background: rgba(255,255,255,0.25); }
+
+    /* ── Stats row (fixed, not scrollable) ── */
+    .stats-row {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      gap: 8px;
+      padding: 12px 14px 10px;
+      flex-shrink: 0;
+    }
+
+    .stat {
+      flex: 1;
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px 8px;
+      text-align: center;
+      border: 1.5px solid #e2e8f0;
+    }
+
+    .stat-val {
+      font-size: 1.4rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .stat-val.blue  { color: #1e40af; }
+    .stat-val.green { color: #16a34a; }
+    .stat-val.amber { color: #d97706; }
+
+    .stat-lbl {
+      font-size: 0.58rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #94a3b8;
+      margin-top: 3px;
+    }
+
+    /* ── Scrollable room list ── */
+    .scroll-wrap {
+      width: 100%;
+      max-width: 480px;
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 14px 16px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* subtle scrollbar */
+    .scroll-wrap::-webkit-scrollbar { width: 4px; }
+    .scroll-wrap::-webkit-scrollbar-track { background: transparent; }
+    .scroll-wrap::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    .room-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* ── Room cards ── */
+    .room-card {
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border-radius: 14px;
+      text-decoration: none;
+      overflow: hidden;
+      border: 1.5px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      transition: box-shadow 0.15s, border-color 0.15s, transform 0.1s;
+    }
+
+    .room-card:active { transform: scale(0.98); }
+
+    .room-card.occupied {
+      border-color: #bbf7d0;
+      background: #f0fdf4;
+    }
+
+    .room-card:hover {
+      box-shadow: 0 4px 14px rgba(30,58,138,0.1);
+      border-color: #93c5fd;
+    }
+
+    .room-card.occupied:hover { border-color: #4ade80; }
+
+    /* Number column */
+    .num-col {
+      width: 58px;
+      min-width: 58px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #1e40af;
+      background: #eff6ff;
+      border-right: 1.5px solid #dbeafe;
+    }
+
+    .room-card.occupied .num-col {
+      background: #dcfce7;
+      border-right-color: #bbf7d0;
+      color: #15803d;
+    }
+
+    /* Info column */
+    .info-col {
+      flex: 1;
+      padding: 0 14px;
+      min-width: 0;
+    }
+
+    /* OCCUPIED: bold, dark, prominent */
+    .guest {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0f172a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* VACANT: clearly softer, recedes visually */
+    .guest.vacant {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #94a3b8;
+    }
+
+    /* Status badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+      padding: 2px 7px 2px 5px;
+      border-radius: 20px;
+    }
+
+    /* Occupied badge: solid green */
+    .badge.occ {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    /* Vacant badge: blue */
+    .badge.vac {
+      background: #dbeafe;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+    }
+
+    .badge-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .badge.occ .badge-dot { background: #16a34a; }
+    .badge.vac .badge-dot { background: #3b82f6; }
+
+    /* Arrow */
+    .arrow-col {
+      padding-right: 14px;
+      font-size: 1.2rem;
+      color: #94a3b8;
+      flex-shrink: 0;
+    }
+
+    .room-card.occupied .arrow-col { color: #4ade80; }
+
+    /* Bottom timestamp */
+    .updated-label {
+      font-size: 0.68rem;
+      color: #64748b;
+      font-weight: 500;
+      text-align: center;
+      padding: 10px 0 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Fixed top bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="icon">🏨</span>
+      <span class="title">Room Directory</span>
+    </div>
+    <a class="staff-btn" href="admin.html">Staff Update</a>
+  </div>
+
+  <!-- Stats (pinned, not scrollable) -->
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-val blue">10</div>
+      <div class="stat-lbl">Total</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val green" id="occupiedCount">0</div>
+      <div class="stat-lbl">Occupied</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val amber" id="vacantCount">10</div>
+      <div class="stat-lbl">Vacant</div>
+    </div>
+  </div>
+
+  <!-- Scrollable room list -->
+  <div class="scroll-wrap">
+    <div class="room-list" id="roomList"></div>
+    <div class="updated-label" id="lastUpdated"></div>
+  </div>
+
+  <script>
+    function renderRooms(names) {
+      const list = document.getElementById('roomList');
+      list.innerHTML = '';
+      let occupied = 0;
+
+      names.forEach(function(entry) {
+        const room = entry.room;
+        const name = entry.name ? entry.name.trim() : '';
+        const isOcc = name !== '';
+        if (isOcc) occupied++;
+
+        const card = document.createElement('a');
+        card.href = 'room.html?r=' + room;
+        card.className = 'room-card' + (isOcc ? ' occupied' : '');
+        card.innerHTML =
+          '<div class="num-col">' + room + '</div>' +
+          '<div class="info-col">' +
+            '<div class="guest' + (isOcc ? '' : ' vacant') + '">' +
+              (isOcc ? name : 'Vacant') +
+            '</div>' +
+            '<div class="badge ' + (isOcc ? 'occ' : 'vac') + '">' +
+              '<span class="badge-dot"></span>' +
+              (isOcc ? 'Occupied' : 'Available') +
+            '</div>' +
+          '</div>' +
+          '<div class="arrow-col">›</div>';
+        list.appendChild(card);
+      });
+
+      document.getElementById('occupiedCount').textContent = occupied;
+      document.getElementById('vacantCount').textContent = 10 - occupied;
+
+      const saved = localStorage.getItem('motel_updated');
+      if (saved) {
+        document.getElementById('lastUpdated').textContent = 'Last updated ' + saved;
+      }
+    }
+
+    const stored = localStorage.getItem('motel_names');
+    const defaults = Array.from({ length: 10 }, function(_, i) {
+      return { room: i + 1, name: '' };
+    });
+    renderRooms(stored ? JSON.parse(stored) : defaults);
+  </script>
+</body>
+</html>

@@ -152,7 +152,7 @@
     }
 
     input[type="text"]::placeholder {
-      color: #cbd5e1;
+      color: #94a3b8;
       font-weight: 400;
     }
 
@@ -182,10 +182,10 @@
     }
 
     .code-input::placeholder {
-      color: #cbd5e1;
-      font-weight: 400;
+      color: #94a3b8;
+      font-weight: 500;
       letter-spacing: 0;
-      font-size: 0.72rem;
+      font-size: 0.78rem;
     }
 
     .clear-btn {
@@ -334,7 +334,7 @@
           'value="' + (entry.name || '').replace(/"/g, '&quot;') + '" autocomplete="off" ' +
           'oninput="updateRow(' + entry.room + ')" />' +
         '<div class="divider-v"></div>' +
-        '<input type="text" class="code-input" id="code' + entry.room + '" placeholder="Code" ' +
+        '<input type="text" class="code-input" id="code' + entry.room + '" placeholder="🔑 Code" ' +
           'value="' + (entry.code || '').replace(/"/g, '&quot;') + '" autocomplete="off" maxlength="10" />' +
         '<button class="clear-btn" onclick="clearRoom(' + entry.room + ')" title="Clear">✕</button>';
       wrap.appendChild(row);

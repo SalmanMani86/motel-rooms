@@ -330,7 +330,7 @@
         if (isOcc) occupied++;
 
         const card = document.createElement('a');
-        card.href = 'r' + room + '.html';
+        card.href = 'room.html?r=' + room;
         card.className = 'room-card' + (isOcc ? ' occupied' : '');
         card.innerHTML =
           '<div class="num-col">' + room + '</div>' +

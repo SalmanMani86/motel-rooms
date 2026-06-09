@@ -39,7 +39,7 @@
     }
 
     .room-number {
-      font-size: 4rem;
+      font-size: 5rem;
       font-weight: 800;
       color: #1e40af;
       line-height: 1;
@@ -48,84 +48,80 @@
 
     .guest-name {
       font-size: 1rem;
-      font-weight: 600;
-      color: #475569;
-      margin-bottom: 24px;
-      min-height: 24px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 20px;
     }
 
     .divider {
       width: 40px;
       height: 3px;
-      background: #e2e8f0;
+      background: #3b82f6;
       border-radius: 2px;
-      margin: 0 auto 24px;
+      margin: 0 auto 20px;
     }
 
     .lockbox-label {
       font-size: 0.72rem;
       font-weight: 700;
-      color: #94a3b8;
+      color: #1e40af;
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     .lockbox-instruction {
       font-size: 0.85rem;
-      color: #64748b;
-      line-height: 1.6;
+      color: #475569;
+      font-weight: 500;
+      line-height: 1.5;
       margin-bottom: 16px;
     }
 
-    /* Code display */
     .code-display {
-      background: #eff6ff;
-      border: 2px solid #3b82f6;
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
       border-radius: 14px;
       padding: 20px;
     }
 
     .code-value {
-      font-size: 2.4rem;
+      font-size: 2.6rem;
       font-weight: 800;
-      color: #1e40af;
-      letter-spacing: 6px;
+      color: #fff;
+      letter-spacing: 8px;
     }
 
     .code-hint {
       font-size: 0.72rem;
-      color: #64748b;
+      color: rgba(255,255,255,0.75);
       margin-top: 6px;
     }
 
-    /* No code yet */
     .no-code {
-      background: #f8fafc;
-      border: 2px dashed #cbd5e1;
+      background: #fef3c7;
+      border: 1.5px solid #fde68a;
       border-radius: 14px;
-      padding: 20px;
-      font-size: 0.82rem;
-      color: #94a3b8;
+      padding: 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #92400e;
     }
 
     .back-link {
       display: inline-block;
       margin-top: 28px;
       font-size: 0.78rem;
-      color: #94a3b8;
+      color: #475569;
       text-decoration: none;
       border: 1.5px solid #e2e8f0;
       border-radius: 20px;
       padding: 8px 20px;
       background: #fff;
+      font-weight: 600;
       transition: border-color 0.15s, color 0.15s;
     }
 
-    .back-link:hover {
-      color: #1e40af;
-      border-color: #93c5fd;
-    }
+    .back-link:hover { color: #1e40af; border-color: #93c5fd; }
   </style>
 </head>
 <body>
@@ -159,21 +155,11 @@
       const name = entry && entry.name ? entry.name.trim() : '';
       const code = entry && entry.code ? entry.code.trim() : '';
 
-      if (name) {
-        document.getElementById('guestName').textContent = 'Welcome, ' + name;
-      }
+      if (name) document.getElementById('guestName').textContent = 'Welcome, ' + name;
 
-      const codeBox = document.getElementById('codeBox');
-      if (code) {
-        codeBox.innerHTML =
-          '<div class="code-display">' +
-            '<div class="code-value">' + code + '</div>' +
-            '<div class="code-hint">Enter this code on the lockbox</div>' +
-          '</div>';
-      } else {
-        codeBox.innerHTML =
-          '<div class="no-code">Code not set yet.<br>Please see front desk.</div>';
-      }
+      document.getElementById('codeBox').innerHTML = code
+        ? '<div class="code-display"><div class="code-value">' + code + '</div><div class="code-hint">Enter this code on the lockbox</div></div>'
+        : '<div class="no-code">⚠️ Code not set yet — please see front desk.</div>';
     }
   </script>
 </body>

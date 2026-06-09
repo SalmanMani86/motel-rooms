@@ -103,6 +103,26 @@
       margin-top: 3px;
     }
 
+    /* ── Instruction banner ── */
+    .instruction-banner {
+      width: 100%;
+      max-width: 480px;
+      background: #fffbeb;
+      border: 1.5px solid #fde68a;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin: 0 14px 4px;
+      flex-shrink: 0;
+    }
+
+    .instruction-banner p {
+      font-size: 0.82rem;
+      color: #92400e;
+      font-weight: 500;
+      line-height: 1.5;
+      text-align: center;
+    }
+
     /* ── Scrollable room list ── */
     .scroll-wrap {
       width: 100%;
@@ -278,6 +298,12 @@
       <div class="stat-val amber" id="vacantCount">10</div>
       <div class="stat-lbl">Vacant</div>
     </div>
+  </div>
+
+  <!-- Guest instruction banner -->
+  <div class="instruction-banner">
+    <p>Your room key is in a lock box next to the door.</p>
+    <p>Tap your name to access the code for the lockbox.</p>
   </div>
 
   <!-- Scrollable room list -->

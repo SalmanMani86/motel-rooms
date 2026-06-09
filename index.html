@@ -107,20 +107,24 @@
     .instruction-banner {
       width: 100%;
       max-width: 480px;
-      background: #fffbeb;
-      border: 1.5px solid #fde68a;
-      border-radius: 12px;
-      padding: 12px 16px;
-      margin: 0 14px 4px;
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      border-radius: 0;
+      padding: 14px 20px 18px;
+      margin-bottom: 10px;
       flex-shrink: 0;
+      text-align: center;
     }
 
     .instruction-banner p {
-      font-size: 0.82rem;
-      color: #92400e;
+      font-size: 0.83rem;
+      color: rgba(255,255,255,0.95);
       font-weight: 500;
-      line-height: 1.5;
-      text-align: center;
+      line-height: 1.6;
+    }
+
+    .instruction-banner p strong {
+      color: #fff;
+      font-weight: 700;
     }
 
     /* ── Scrollable room list ── */
@@ -302,8 +306,8 @@
 
   <!-- Guest instruction banner -->
   <div class="instruction-banner">
-    <p>Your room key is in a lock box next to the door.</p>
-    <p>Tap your name to access the code for the lockbox.</p>
+    <p><strong>🔑 Your room key is in a lock box next to the door.</strong></p>
+    <p>Tap your name below to get the lockbox code.</p>
   </div>
 
   <!-- Scrollable room list -->
@@ -325,7 +329,7 @@
         if (isOcc) occupied++;
 
         const card = document.createElement('a');
-        card.href = 'room.html?r=' + room;
+        card.href = 'r' + room + '.html';
         card.className = 'room-card' + (isOcc ? ' occupied' : '');
         card.innerHTML =
           '<div class="num-col">' + room + '</div>' +

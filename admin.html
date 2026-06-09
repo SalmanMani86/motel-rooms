@@ -145,14 +145,47 @@
       color: #0f172a;
       font-size: 0.92rem;
       font-weight: 600;
-      padding: 0 12px;
+      padding: 0 10px;
       height: 56px;
       font-family: inherit;
+      min-width: 0;
     }
 
     input[type="text"]::placeholder {
       color: #cbd5e1;
       font-weight: 400;
+    }
+
+    .divider-v {
+      width: 1px;
+      height: 32px;
+      background: #e2e8f0;
+      flex-shrink: 0;
+    }
+
+    .row.has-name .divider-v { background: #bbf7d0; }
+
+    .code-input {
+      width: 80px;
+      min-width: 80px;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: #1e40af;
+      font-size: 0.88rem;
+      font-weight: 700;
+      padding: 0 8px;
+      height: 56px;
+      font-family: inherit;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+
+    .code-input::placeholder {
+      color: #cbd5e1;
+      font-weight: 400;
+      letter-spacing: 0;
+      font-size: 0.72rem;
     }
 
     .clear-btn {
@@ -286,7 +319,7 @@
     const stored = localStorage.getItem('motel_names');
     const names = stored
       ? JSON.parse(stored)
-      : Array.from({ length: 10 }, function(_, i) { return { room: i + 1, name: '' }; });
+      : Array.from({ length: 10 }, function(_, i) { return { room: i + 1, name: '', code: '' }; });
 
     const wrap = document.getElementById('formWrap');
 
@@ -298,8 +331,11 @@
       row.innerHTML =
         '<div class="num-col">' + entry.room + '</div>' +
         '<input type="text" id="room' + entry.room + '" placeholder="Guest name..." ' +
-          'value="' + entry.name.replace(/"/g, '&quot;') + '" autocomplete="off" ' +
+          'value="' + (entry.name || '').replace(/"/g, '&quot;') + '" autocomplete="off" ' +
           'oninput="updateRow(' + entry.room + ')" />' +
+        '<div class="divider-v"></div>' +
+        '<input type="text" class="code-input" id="code' + entry.room + '" placeholder="Code" ' +
+          'value="' + (entry.code || '').replace(/"/g, '&quot;') + '" autocomplete="off" maxlength="10" />' +
         '<button class="clear-btn" onclick="clearRoom(' + entry.room + ')" title="Clear">✕</button>';
       wrap.appendChild(row);
     });
@@ -313,12 +349,14 @@
 
     function clearRoom(n) {
       document.getElementById('room' + n).value = '';
+      document.getElementById('code' + n).value = '';
       updateRow(n);
     }
 
     function clearAll() {
       for (let i = 1; i <= 10; i++) {
         document.getElementById('room' + i).value = '';
+        document.getElementById('code' + i).value = '';
         updateRow(i);
       }
     }
@@ -326,7 +364,11 @@
     function saveNames() {
       const updated = Array.from({ length: 10 }, function(_, i) {
         const n = i + 1;
-        return { room: n, name: document.getElementById('room' + n).value.trim() };
+        return {
+          room: n,
+          name: document.getElementById('room' + n).value.trim(),
+          code: document.getElementById('code' + n).value.trim()
+        };
       });
       localStorage.setItem('motel_names', JSON.stringify(updated));
       const now = new Date();

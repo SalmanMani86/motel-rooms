@@ -43,7 +43,7 @@
       font-weight: 800;
       color: #1e40af;
       line-height: 1;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
     .guest-name {
@@ -51,6 +51,7 @@
       font-weight: 600;
       color: #475569;
       margin-bottom: 24px;
+      min-height: 24px;
     }
 
     .divider {
@@ -71,20 +72,41 @@
     }
 
     .lockbox-instruction {
-      font-size: 0.88rem;
+      font-size: 0.85rem;
       color: #64748b;
       line-height: 1.6;
       margin-bottom: 16px;
     }
 
-    .code-box {
+    /* Code display */
+    .code-display {
+      background: #eff6ff;
+      border: 2px solid #3b82f6;
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    .code-value {
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: #1e40af;
+      letter-spacing: 6px;
+    }
+
+    .code-hint {
+      font-size: 0.72rem;
+      color: #64748b;
+      margin-top: 6px;
+    }
+
+    /* No code yet */
+    .no-code {
       background: #f8fafc;
       border: 2px dashed #cbd5e1;
-      border-radius: 12px;
-      padding: 18px;
-      font-size: 0.8rem;
+      border-radius: 14px;
+      padding: 20px;
+      font-size: 0.82rem;
       color: #94a3b8;
-      font-style: italic;
     }
 
     .back-link {
@@ -113,11 +135,9 @@
     <div class="room-number" id="roomNum">—</div>
     <div class="guest-name" id="guestName"></div>
     <div class="divider"></div>
-    <div class="lockbox-label">Lockbox Code</div>
-    <div class="lockbox-instruction">Your room key is in the lock box next to the door.</div>
-    <div class="code-box" id="codeBox">
-      Code will be placed here by staff
-    </div>
+    <div class="lockbox-label">🔑 Lockbox Code</div>
+    <div class="lockbox-instruction">Your key is in the lock box next to the door.</div>
+    <div id="codeBox"></div>
   </div>
 
   <a class="back-link" href="index.html">← Back to Directory</a>
@@ -135,9 +155,24 @@
       const stored = localStorage.getItem('motel_names');
       const names = stored ? JSON.parse(stored) : [];
       const entry = names.find(function(n) { return n.room === roomNum; });
+
       const name = entry && entry.name ? entry.name.trim() : '';
+      const code = entry && entry.code ? entry.code.trim() : '';
+
       if (name) {
         document.getElementById('guestName').textContent = 'Welcome, ' + name;
+      }
+
+      const codeBox = document.getElementById('codeBox');
+      if (code) {
+        codeBox.innerHTML =
+          '<div class="code-display">' +
+            '<div class="code-value">' + code + '</div>' +
+            '<div class="code-hint">Enter this code on the lockbox</div>' +
+          '</div>';
+      } else {
+        codeBox.innerHTML =
+          '<div class="no-code">Code not set yet.<br>Please see front desk.</div>';
       }
     }
   </script>

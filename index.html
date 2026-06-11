@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Room Directory</title>
+  <title>Lucia Lodge — Guest Check-in</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -17,21 +17,18 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      overflow: hidden; /* prevent body scroll — inner list scrolls */
+      overflow: hidden;
     }
 
-    /* ── Fixed top bar ── */
     .topbar {
       width: 100%;
       background: #1e3a8a;
       display: flex;
       align-items: center;
-      justify-content: space-between;
       padding: 0 16px;
       height: 56px;
       flex-shrink: 0;
       box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      z-index: 10;
     }
 
     .topbar-left {
@@ -41,6 +38,35 @@
     }
 
     .topbar-left span.icon { font-size: 1.25rem; }
+
+    .topbar-left span.title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .instruction-banner {
+      width: calc(100% - 28px);
+      max-width: 480px;
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      border-radius: 14px;
+      padding: 10px 16px;
+      margin: 12px 14px 4px;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .instruction-banner p {
+      font-size: 0.83rem;
+      color: rgba(255,255,255,0.95);
+      font-weight: 500;
+      line-height: 1.6;
+    }
+
+    .instruction-banner p strong {
+      color: #fff;
+      font-weight: 700;
+    }
 
     .refresh-row {
       width: 100%;
@@ -68,77 +94,6 @@
     .refresh-btn:hover { background: #eff6ff; border-color: #93c5fd; }
     .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .topbar-left span.title {
-      font-size: 1rem;
-      font-weight: 700;
-      color: #fff;
-      letter-spacing: 0.2px;
-    }
-
-/* ── Stats row (fixed, not scrollable) ── */
-    .stats-row {
-      width: 100%;
-      max-width: 480px;
-      display: flex;
-      gap: 8px;
-      padding: 12px 14px 10px;
-      flex-shrink: 0;
-    }
-
-    .stat {
-      flex: 1;
-      background: #fff;
-      border-radius: 12px;
-      padding: 10px 8px;
-      text-align: center;
-      border: 1.5px solid #e2e8f0;
-    }
-
-    .stat-val {
-      font-size: 1.4rem;
-      font-weight: 800;
-      line-height: 1;
-    }
-
-    .stat-val.blue  { color: #1e40af; }
-    .stat-val.green { color: #16a34a; }
-    .stat-val.amber { color: #d97706; }
-
-    .stat-lbl {
-      font-size: 0.58rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: #94a3b8;
-      margin-top: 3px;
-    }
-
-    /* ── Instruction banner ── */
-    .instruction-banner {
-      width: 100%;
-      max-width: 480px;
-      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-      border-radius: 14px;
-      padding: 10px 16px;
-      margin: 0 14px 10px;
-      width: calc(100% - 28px);
-      flex-shrink: 0;
-      text-align: center;
-    }
-
-    .instruction-banner p {
-      font-size: 0.83rem;
-      color: rgba(255,255,255,0.95);
-      font-weight: 500;
-      line-height: 1.6;
-    }
-
-    .instruction-banner p strong {
-      color: #fff;
-      font-weight: 700;
-    }
-
-    /* ── Scrollable room list ── */
     .scroll-wrap {
       width: 100%;
       max-width: 480px;
@@ -148,135 +103,66 @@
       -webkit-overflow-scrolling: touch;
     }
 
-    /* subtle scrollbar */
     .scroll-wrap::-webkit-scrollbar { width: 4px; }
     .scroll-wrap::-webkit-scrollbar-track { background: transparent; }
     .scroll-wrap::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
-    .room-list {
+    .guest-list {
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
 
-    /* ── Room cards ── */
-    .room-card {
+    /* Clickable occupied card */
+    .guest-card {
       display: flex;
       align-items: center;
       background: #fff;
       border-radius: 14px;
       text-decoration: none;
-      overflow: hidden;
-      border: 1.5px solid #e2e8f0;
+      border: 1.5px solid #bbf7d0;
+      background: #f0fdf4;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      padding: 16px 18px;
       transition: box-shadow 0.15s, border-color 0.15s, transform 0.1s;
     }
 
-    .room-card:active { transform: scale(0.98); }
-
-    .room-card.occupied {
-      border-color: #bbf7d0;
-      background: #f0fdf4;
-    }
-
-    .room-card:hover {
+    .guest-card:active { transform: scale(0.98); }
+    .guest-card:hover {
       box-shadow: 0 4px 14px rgba(30,58,138,0.1);
-      border-color: #93c5fd;
+      border-color: #4ade80;
     }
 
-    .room-card.occupied:hover { border-color: #4ade80; }
-
-    /* Number column */
-    .num-col {
-      width: 58px;
-      min-width: 58px;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.45rem;
-      font-weight: 800;
-      color: #1e40af;
-      background: #eff6ff;
-      border-right: 1.5px solid #dbeafe;
-    }
-
-    .room-card.occupied .num-col {
-      background: #dcfce7;
-      border-right-color: #bbf7d0;
-      color: #15803d;
-    }
-
-    /* Info column */
-    .info-col {
+    .guest-name {
       flex: 1;
-      padding: 0 14px;
-      min-width: 0;
-    }
-
-    /* OCCUPIED: bold, dark, prominent */
-    .guest {
-      font-size: 1rem;
+      font-size: 1.05rem;
       font-weight: 700;
       color: #0f172a;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
-    /* VACANT: clearly softer, recedes visually */
-    .guest.vacant {
-      font-size: 0.85rem;
+    .guest-arrow {
+      font-size: 1.2rem;
+      color: #4ade80;
+    }
+
+    /* Non-clickable vacant card */
+    .vacant-card {
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border-radius: 14px;
+      border: 1.5px solid #e2e8f0;
+      padding: 16px 18px;
+      cursor: default;
+    }
+
+    .vacant-name {
+      flex: 1;
+      font-size: 0.9rem;
       font-weight: 500;
       color: #94a3b8;
+      letter-spacing: 0.3px;
     }
-
-    /* Status badge */
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 0.6rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-top: 4px;
-      padding: 2px 7px 2px 5px;
-      border-radius: 20px;
-    }
-
-    /* Occupied badge: solid green */
-    .badge.occ {
-      background: #dcfce7;
-      color: #15803d;
-    }
-
-    /* Vacant badge: blue */
-    .badge.vac {
-      background: #dbeafe;
-      color: #1d4ed8;
-      border: 1px solid #bfdbfe;
-    }
-
-    .badge-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .badge.occ .badge-dot { background: #16a34a; }
-    .badge.vac .badge-dot { background: #3b82f6; }
-
-    /* Arrow */
-    .arrow-col {
-      padding-right: 14px;
-      font-size: 1.2rem;
-      color: #94a3b8;
-      flex-shrink: 0;
-    }
-
-    .room-card.occupied .arrow-col { color: #4ade80; }
 
     /* Loader */
     .loader {
@@ -300,106 +186,77 @@
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
-
   </style>
 </head>
 <body>
 
-  <!-- Fixed top bar -->
   <div class="topbar">
     <div class="topbar-left">
       <span class="icon">🏨</span>
-      <span class="title">Room Directory</span>
+      <span class="title">Lucia Lodge</span>
     </div>
   </div>
 
-  <!-- Stats (pinned, not scrollable) -->
-  <div class="stats-row">
-    <div class="stat">
-      <div class="stat-val blue">10</div>
-      <div class="stat-lbl">Total</div>
-    </div>
-    <div class="stat">
-      <div class="stat-val green" id="occupiedCount">—</div>
-      <div class="stat-lbl">Occupied</div>
-    </div>
-    <div class="stat">
-      <div class="stat-val amber" id="vacantCount">—</div>
-      <div class="stat-lbl">Vacant</div>
-    </div>
-  </div>
-
-  <!-- Guest instruction banner -->
   <div class="instruction-banner">
     <p><strong>🔑 Your room key is in a lock box next to the door.</strong></p>
     <p>Tap your name below to get the lockbox code.</p>
   </div>
 
-  <!-- Refresh row -->
   <div class="refresh-row">
     <button class="refresh-btn" onclick="refreshRooms()" id="refreshBtn">↻ Refresh</button>
   </div>
 
-  <!-- Scrollable room list -->
   <div class="scroll-wrap">
     <div id="loader" class="loader">
       <div class="spinner"></div>
-      Loading rooms…
+      Loading…
     </div>
-    <div class="room-list" id="roomList"></div>
+    <div class="guest-list" id="guestList"></div>
   </div>
 
   <script>
-    function renderRooms(names) {
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbytmNDqZKGEVv8htjH_qv5XHg1WIf9CDwnBc9pKwcy5qrMV-6WRt4O3zODs2p8wV-ZC/exec';
+
+    function renderGuests(rooms) {
       document.getElementById('loader').style.display = 'none';
-      const list = document.getElementById('roomList');
+      const list = document.getElementById('guestList');
       list.innerHTML = '';
-      let occupied = 0;
 
-      names.forEach(function(entry) {
-        const room = entry.room;
-        const name = entry.name ? entry.name.trim() : '';
+      rooms.forEach(function(entry) {
+        const name = entry.name ? String(entry.name).trim() : '';
         const isOcc = name !== '';
-        if (isOcc) occupied++;
 
-        const card = document.createElement('a');
-        card.href = 'room.html?r=' + room;
-        card.className = 'room-card' + (isOcc ? ' occupied' : '');
-        card.innerHTML =
-          '<div class="num-col">' + room + '</div>' +
-          '<div class="info-col">' +
-            '<div class="guest' + (isOcc ? '' : ' vacant') + '">' +
-              (isOcc ? name : 'Vacant') +
-            '</div>' +
-            '<div class="badge ' + (isOcc ? 'occ' : 'vac') + '">' +
-              '<span class="badge-dot"></span>' +
-              (isOcc ? 'Occupied' : 'Available') +
-            '</div>' +
-          '</div>' +
-          '<div class="arrow-col">›</div>';
-        list.appendChild(card);
+        if (isOcc) {
+          const a = document.createElement('a');
+          a.href = 'r' + entry.room + '.html';
+          a.className = 'guest-card';
+          a.innerHTML =
+            '<div class="guest-name">' + name + '</div>' +
+            '<div class="guest-arrow">›</div>';
+          list.appendChild(a);
+        } else {
+          const div = document.createElement('div');
+          div.className = 'vacant-card';
+          div.innerHTML = '<div class="vacant-name">AVAILABLE</div>';
+          list.appendChild(div);
+        }
       });
-
-      document.getElementById('occupiedCount').textContent = occupied;
-      document.getElementById('vacantCount').textContent = 10 - occupied;
-
     }
-
-    const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyO5f4cRmKorU8j0k6gisJpw8AN55z0gB-g0dJhEy3-ZDjMPPCos7YnnM9WnKzYMnrE/exec';
 
     const defaults = Array.from({ length: 10 }, function(_, i) {
       return { room: i + 1, name: '', code: '' };
     });
 
-    async function loadFromSheets() {
-      try {
-        const res = await fetch(SHEET_URL + '?t=' + Date.now(), { redirect: 'follow' });
-        const text = await res.text();
-        const data = JSON.parse(text);
-        renderRooms(data.rooms && data.rooms.length ? data.rooms : defaults);
-      } catch(e) {
-        renderRooms(defaults);
-      }
+    function loadGuests() {
+      return fetch(SCRIPT_URL + '?t=' + Date.now(), { redirect: 'follow' })
+        .then(function(res) { return res.text(); })
+        .then(function(text) {
+          const data = JSON.parse(text);
+          renderGuests(data.rooms && data.rooms.length ? data.rooms : defaults);
+        })
+        .catch(function() {
+          renderGuests(defaults);
+        });
     }
 
     function refreshRooms() {
@@ -407,15 +264,14 @@
       btn.disabled = true;
       btn.textContent = '↻ Loading…';
       document.getElementById('loader').style.display = 'flex';
-      document.getElementById('roomList').innerHTML = '';
-      loadFromSheets().finally(function() {
+      document.getElementById('guestList').innerHTML = '';
+      loadGuests().finally(function() {
         btn.disabled = false;
         btn.textContent = '↻ Refresh';
       });
     }
 
-    loadFromSheets();
+    loadGuests();
   </script>
 </body>
 </html>
-

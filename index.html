@@ -42,6 +42,32 @@
 
     .topbar-left span.icon { font-size: 1.25rem; }
 
+    .refresh-row {
+      width: 100%;
+      max-width: 480px;
+      padding: 6px 14px 2px;
+      display: flex;
+      justify-content: flex-end;
+      flex-shrink: 0;
+    }
+
+    .refresh-btn {
+      background: #fff;
+      color: #1e40af;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1.5px solid #bfdbfe;
+      border-radius: 20px;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+
+    .refresh-btn:hover { background: #eff6ff; border-color: #93c5fd; }
+    .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
     .topbar-left span.title {
       font-size: 1rem;
       font-weight: 700;
@@ -49,23 +75,7 @@
       letter-spacing: 0.2px;
     }
 
-    .staff-btn {
-      background: rgba(255,255,255,0.15);
-      color: #fff;
-      font-size: 0.72rem;
-      font-weight: 600;
-      border: 1.5px solid rgba(255,255,255,0.3);
-      border-radius: 20px;
-      padding: 6px 14px;
-      text-decoration: none;
-      letter-spacing: 0.2px;
-      transition: background 0.15s;
-      white-space: nowrap;
-    }
-
-    .staff-btn:hover { background: rgba(255,255,255,0.25); }
-
-    /* ── Stats row (fixed, not scrollable) ── */
+/* ── Stats row (fixed, not scrollable) ── */
     .stats-row {
       width: 100%;
       max-width: 480px;
@@ -268,14 +278,29 @@
 
     .room-card.occupied .arrow-col { color: #4ade80; }
 
-    /* Bottom timestamp */
-    .updated-label {
-      font-size: 0.68rem;
-      color: #64748b;
+    /* Loader */
+    .loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 40px 0;
+      color: #94a3b8;
+      font-size: 0.82rem;
       font-weight: 500;
-      text-align: center;
-      padding: 10px 0 4px;
     }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid #e2e8f0;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
   </style>
 </head>
 <body>
@@ -286,7 +311,6 @@
       <span class="icon">🏨</span>
       <span class="title">Room Directory</span>
     </div>
-    <a class="staff-btn" href="admin.html">Staff Update</a>
   </div>
 
   <!-- Stats (pinned, not scrollable) -->
@@ -296,11 +320,11 @@
       <div class="stat-lbl">Total</div>
     </div>
     <div class="stat">
-      <div class="stat-val green" id="occupiedCount">0</div>
+      <div class="stat-val green" id="occupiedCount">—</div>
       <div class="stat-lbl">Occupied</div>
     </div>
     <div class="stat">
-      <div class="stat-val amber" id="vacantCount">10</div>
+      <div class="stat-val amber" id="vacantCount">—</div>
       <div class="stat-lbl">Vacant</div>
     </div>
   </div>
@@ -311,14 +335,23 @@
     <p>Tap your name below to get the lockbox code.</p>
   </div>
 
+  <!-- Refresh row -->
+  <div class="refresh-row">
+    <button class="refresh-btn" onclick="refreshRooms()" id="refreshBtn">↻ Refresh</button>
+  </div>
+
   <!-- Scrollable room list -->
   <div class="scroll-wrap">
+    <div id="loader" class="loader">
+      <div class="spinner"></div>
+      Loading rooms…
+    </div>
     <div class="room-list" id="roomList"></div>
-    <div class="updated-label" id="lastUpdated"></div>
   </div>
 
   <script>
     function renderRooms(names) {
+      document.getElementById('loader').style.display = 'none';
       const list = document.getElementById('roomList');
       list.innerHTML = '';
       let occupied = 0;
@@ -350,10 +383,9 @@
       document.getElementById('occupiedCount').textContent = occupied;
       document.getElementById('vacantCount').textContent = 10 - occupied;
 
-      document.getElementById('lastUpdated').textContent = 'Last updated ' + new Date().toLocaleString();
     }
 
-    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQYuU2szQJ_dTDeCSPrRdHmyZFvekxWKbDHT4yW1uhj6-rlXPWJEg6v8NnFe8Ezz344w5GETbHGeiJ/pub?gid=0&single=true&output=csv';
+    const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyO5f4cRmKorU8j0k6gisJpw8AN55z0gB-g0dJhEy3-ZDjMPPCos7YnnM9WnKzYMnrE/exec';
 
     const defaults = Array.from({ length: 10 }, function(_, i) {
       return { room: i + 1, name: '', code: '' };
@@ -361,24 +393,25 @@
 
     async function loadFromSheets() {
       try {
-        const res = await fetch(SHEET_URL + '&t=' + Date.now());
+        const res = await fetch(SHEET_URL + '?t=' + Date.now(), { redirect: 'follow' });
         const text = await res.text();
-        const lines = text.trim().split('\n').slice(1);
-        const names = Array.from({ length: 10 }, function(_, i) {
-          const n = i + 1;
-          const line = lines.find(function(l) { return parseInt(l.split(',')[0]) === n; });
-          if (!line) return { room: n, name: '', code: '' };
-          const parts = line.split(',');
-          return {
-            room: n,
-            name: (parts[1] || '').trim().replace(/^"|"$/g, ''),
-            code: (parts[2] || '').trim().replace(/^"|"$/g, '')
-          };
-        });
-        renderRooms(names);
+        const data = JSON.parse(text);
+        renderRooms(data.rooms && data.rooms.length ? data.rooms : defaults);
       } catch(e) {
         renderRooms(defaults);
       }
+    }
+
+    function refreshRooms() {
+      const btn = document.getElementById('refreshBtn');
+      btn.disabled = true;
+      btn.textContent = '↻ Loading…';
+      document.getElementById('loader').style.display = 'flex';
+      document.getElementById('roomList').innerHTML = '';
+      loadFromSheets().finally(function() {
+        btn.disabled = false;
+        btn.textContent = '↻ Refresh';
+      });
     }
 
     loadFromSheets();

@@ -89,6 +89,8 @@
       font-weight: 800;
       color: #fff;
       letter-spacing: 8px;
+      word-break: break-all;
+      line-height: 1.2;
     }
 
     .code-hint {
@@ -122,6 +124,24 @@
     }
 
     .back-link:hover { color: #1e40af; border-color: #93c5fd; }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid #e2e8f0;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text {
+      font-size: 0.82rem;
+      color: #94a3b8;
+      font-weight: 500;
+    }
   </style>
 </head>
 <body>
@@ -133,49 +153,57 @@
     <div class="divider"></div>
     <div class="lockbox-label">🔑 Lockbox Code</div>
     <div class="lockbox-instruction">Your key is in the lock box next to the door.</div>
-    <div id="codeBox"></div>
+    <div id="codeBox">
+      <div class="spinner"></div>
+      <div class="loading-text">Loading…</div>
+    </div>
   </div>
 
   <a class="back-link" href="index.html">← Back to Directory</a>
 
   <script>
-    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQYuU2szQJ_dTDeCSPrRdHmyZFvekxWKbDHT4yW1uhj6-rlXPWJEg6v8NnFe8Ezz344w5GETbHGeiJ/pub?gid=0&single=true&output=csv';
+    const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyO5f4cRmKorU8j0k6gisJpw8AN55z0gB-g0dJhEy3-ZDjMPPCos7YnnM9WnKzYMnrE/exec';
 
     const params = new URLSearchParams(window.location.search);
     const roomNum = parseInt(params.get('r'));
 
     if (!roomNum || roomNum < 1 || roomNum > 10) {
       document.getElementById('roomNum').textContent = '?';
+      document.querySelector('.lockbox-label').style.display = 'none';
+      document.querySelector('.lockbox-instruction').style.display = 'none';
+      document.getElementById('codeBox').innerHTML = '<div class="no-code">⚠️ Invalid room number.</div>';
     } else {
       document.title = 'Room ' + roomNum;
       document.getElementById('roomNum').textContent = roomNum;
 
       function renderEntry(entry) {
-        const name = entry && entry.name ? entry.name.trim() : '';
-        const code = entry && entry.code ? entry.code.trim() : '';
-        if (name) document.getElementById('guestName').textContent = 'Welcome, ' + name;
-        document.getElementById('codeBox').innerHTML = code
-          ? '<div class="code-display"><div class="code-value">' + code + '</div><div class="code-hint">Enter this code on the lockbox</div></div>'
-          : '<div class="no-code">⚠️ Code not set yet — please see front desk.</div>';
+        const name = entry && entry.name ? String(entry.name).trim() : '';
+        const code = entry && entry.code ? String(entry.code).trim() : '';
+        if (name) {
+          document.getElementById('guestName').textContent = 'Welcome, ' + name;
+        }
+        if (code) {
+          const fontSize = code.length <= 6 ? '2.6rem' : code.length <= 8 ? '2rem' : '1.4rem';
+          const spacing = code.length <= 6 ? '8px' : '4px';
+          document.getElementById('codeBox').innerHTML =
+            '<div class="code-display"><div class="code-value" style="font-size:' + fontSize + ';letter-spacing:' + spacing + '">' + code + '</div><div class="code-hint">Enter this code on the lockbox</div></div>';
+        } else {
+          document.getElementById('codeBox').innerHTML =
+            '<div class="no-code">⚠️ Code not set yet — please see front desk.</div>';
+        }
       }
 
-      // Try live sheet first, fall back to localStorage
-      fetch(SHEET_URL + '&t=' + Date.now())
+      fetch(SHEET_URL + '?t=' + Date.now(), { redirect: 'follow' })
         .then(function(res) { return res.text(); })
         .then(function(text) {
-          const lines = text.trim().split('\n').slice(1);
-          const line = lines.find(function(l) { return parseInt(l.split(',')[0]) === roomNum; });
-          if (!line) { renderEntry({}); return; }
-          const parts = line.split(',');
-          renderEntry({
-            name: (parts[1] || '').trim().replace(/^"|"$/g, ''),
-            code: (parts[2] || '').trim().replace(/^"|"$/g, '')
-          });
+          const data = JSON.parse(text);
+          const rooms = data.rooms || [];
+          const entry = rooms.find(function(r) { return r.room === roomNum; }) || {};
+          renderEntry(entry);
         })
         .catch(function() {
-          const stored = localStorage.getItem('motel_names');
-          const names = stored ? JSON.parse(stored) : [];
-          renderEntry(names.find(function(n) { return n.room === roomNum; }) || {});
+          document.getElementById('codeBox').innerHTML =
+            '<div class="no-code">⚠️ Could not load — please see front desk.</div>';
         });
     }
   </script>

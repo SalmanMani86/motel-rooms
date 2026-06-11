@@ -63,24 +63,44 @@
 
     .back-btn:hover { background: rgba(255,255,255,0.25); }
 
-    /* ── Tip banner ── */
-    .tip {
-      width: 100%;
+
+    /* ── Tip + refresh row ── */
+    .tip-row {
+      width: calc(100% - 28px);
       max-width: 480px;
-      margin: 68px 0 0;
+      margin: 68px 14px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tip {
+      flex: 1;
       padding: 10px 16px;
       background: #dbeafe;
       border-radius: 10px;
       font-size: 0.75rem;
       color: #1e40af;
       font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-left: 14px;
-      margin-right: 14px;
-      width: calc(100% - 28px);
     }
+
+    .refresh-btn {
+      background: #fff;
+      color: #1e40af;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1.5px solid #bfdbfe;
+      border-radius: 20px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s, border-color 0.15s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .refresh-btn:hover { background: #eff6ff; border-color: #93c5fd; }
+    .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* ── Form ── */
     .form-wrap {
@@ -256,6 +276,29 @@
 
     .clear-all-btn:hover { background: #fee2e2; }
 
+    /* ── Loader ── */
+    .loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 40px 0;
+      color: #94a3b8;
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid #e2e8f0;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     /* ── Toast ── */
     .toast {
       position: fixed;
@@ -293,13 +336,19 @@
     <a class="back-btn" href="index.html">← Directory</a>
   </div>
 
-  <!-- Tip -->
-  <div class="tip">
-    💡 Type a name to mark occupied · Leave blank for vacant
+  <!-- Tip + Refresh row -->
+  <div class="tip-row">
+    <div class="tip">💡 Type a name to mark occupied · Leave blank for vacant</div>
+    <button class="refresh-btn" onclick="reloadForm()" id="refreshBtn">↻ Reload</button>
   </div>
 
   <!-- Form -->
-  <div class="form-wrap" id="formWrap"></div>
+  <div class="form-wrap" id="formWrap">
+    <div id="loader" class="loader">
+      <div class="spinner"></div>
+      Loading current data…
+    </div>
+  </div>
 
   <!-- Toast -->
   <div class="toast" id="toast">✓ Directory updated!</div>
@@ -311,8 +360,7 @@
   </div>
 
   <script>
-    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQYuU2szQJ_dTDeCSPrRdHmyZFvekxWKbDHT4yW1uhj6-rlXPWJEg6v8NnFe8Ezz344w5GETbHGeiJ/pub?gid=0&single=true&output=csv';
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxq57DzU4sNpoyyOJmP_HV7T-Y6jqGXVdFWJemo1Vf8a3luHkdcVLTQGoqSwHNQMPRNhg/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyO5f4cRmKorU8j0k6gisJpw8AN55z0gB-g0dJhEy3-ZDjMPPCos7YnnM9WnKzYMnrE/exec';
 
     const today = new Date();
     document.getElementById('todayDate').textContent = today.toLocaleDateString('en-US', {
@@ -324,44 +372,57 @@
     function buildForm(names) {
       wrap.innerHTML = '';
       names.forEach(function(entry) {
+
         const hasName = entry.name && entry.name.trim() !== '';
         const row = document.createElement('div');
         row.className = 'row' + (hasName ? ' has-name' : '');
         row.id = 'row' + entry.room;
+        const nameVal = String(entry.name || '').replace(/"/g, '&quot;');
+        const codeVal = String(entry.code || '').replace(/"/g, '&quot;');
         row.innerHTML =
           '<div class="num-col">' + entry.room + '</div>' +
           '<input type="text" id="room' + entry.room + '" placeholder="Guest name..." ' +
-            'value="' + (entry.name || '').replace(/"/g, '&quot;') + '" autocomplete="off" ' +
+            'value="' + nameVal + '" autocomplete="off" ' +
             'oninput="updateRow(' + entry.room + ')" />' +
           '<div class="divider-v"></div>' +
           '<input type="text" class="code-input" id="code' + entry.room + '" placeholder="🔑 Code" ' +
-            'value="' + (entry.code || '').replace(/"/g, '&quot;') + '" autocomplete="off" maxlength="10" />' +
+            'value="' + codeVal + '" autocomplete="off" maxlength="10" />' +
           '<button class="clear-btn" onclick="clearRoom(' + entry.room + ')" title="Clear">✕</button>';
         wrap.appendChild(row);
       });
     }
 
-    // Load current data from Google Sheets into the form
-    fetch(SHEET_URL + '&t=' + Date.now())
+    // Load current data from Apps Script into the form
+    fetch(SCRIPT_URL + '?t=' + Date.now(), { redirect: 'follow' })
       .then(function(res) { return res.text(); })
       .then(function(text) {
-        const lines = text.trim().split('\n').slice(1);
-        const names = Array.from({ length: 10 }, function(_, i) {
-          const n = i + 1;
-          const line = lines.find(function(l) { return parseInt(l.split(',')[0]) === n; });
-          if (!line) return { room: n, name: '', code: '' };
-          const parts = line.split(',');
-          return {
-            room: n,
-            name: (parts[1] || '').trim().replace(/^"|"$/g, ''),
-            code: (parts[2] || '').trim().replace(/^"|"$/g, '')
-          };
-        });
-        buildForm(names);
+        var data = JSON.parse(text);
+        buildForm(data.rooms && data.rooms.length ? data.rooms : Array.from({ length: 10 }, function(_, i) { return { room: i + 1, name: '', code: '' }; }));
       })
-      .catch(function() {
+      .catch(function(err) {
+        console.error('Load error:', err);
         buildForm(Array.from({ length: 10 }, function(_, i) { return { room: i + 1, name: '', code: '' }; }));
       });
+
+    function reloadForm() {
+      const btn = document.getElementById('refreshBtn');
+      btn.disabled = true;
+      btn.textContent = '↻ Loading…';
+      wrap.innerHTML = '<div class="loader"><div class="spinner"></div>Loading current data…</div>';
+      fetch(SCRIPT_URL + '?t=' + Date.now(), { redirect: 'follow' })
+        .then(function(res) { return res.text(); })
+        .then(function(text) {
+          var data = JSON.parse(text);
+          buildForm(data.rooms && data.rooms.length ? data.rooms : Array.from({ length: 10 }, function(_, i) { return { room: i + 1, name: '', code: '' }; }));
+        })
+        .catch(function() {
+          buildForm(Array.from({ length: 10 }, function(_, i) { return { room: i + 1, name: '', code: '' }; }));
+        })
+        .finally(function() {
+          btn.disabled = false;
+          btn.textContent = '↻ Reload';
+        });
+    }
 
     function updateRow(n) {
       const val = document.getElementById('room' + n).value.trim();

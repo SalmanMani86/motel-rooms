@@ -139,6 +139,8 @@
   <a class="back-link" href="index.html">← Back to Directory</a>
 
   <script>
+    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQYuU2szQJ_dTDeCSPrRdHmyZFvekxWKbDHT4yW1uhj6-rlXPWJEg6v8NnFe8Ezz344w5GETbHGeiJ/pub?gid=0&single=true&output=csv';
+
     const params = new URLSearchParams(window.location.search);
     const roomNum = parseInt(params.get('r'));
 
@@ -148,18 +150,33 @@
       document.title = 'Room ' + roomNum;
       document.getElementById('roomNum').textContent = roomNum;
 
-      const stored = localStorage.getItem('motel_names');
-      const names = stored ? JSON.parse(stored) : [];
-      const entry = names.find(function(n) { return n.room === roomNum; });
+      function renderEntry(entry) {
+        const name = entry && entry.name ? entry.name.trim() : '';
+        const code = entry && entry.code ? entry.code.trim() : '';
+        if (name) document.getElementById('guestName').textContent = 'Welcome, ' + name;
+        document.getElementById('codeBox').innerHTML = code
+          ? '<div class="code-display"><div class="code-value">' + code + '</div><div class="code-hint">Enter this code on the lockbox</div></div>'
+          : '<div class="no-code">⚠️ Code not set yet — please see front desk.</div>';
+      }
 
-      const name = entry && entry.name ? entry.name.trim() : '';
-      const code = entry && entry.code ? entry.code.trim() : '';
-
-      if (name) document.getElementById('guestName').textContent = 'Welcome, ' + name;
-
-      document.getElementById('codeBox').innerHTML = code
-        ? '<div class="code-display"><div class="code-value">' + code + '</div><div class="code-hint">Enter this code on the lockbox</div></div>'
-        : '<div class="no-code">⚠️ Code not set yet — please see front desk.</div>';
+      // Try live sheet first, fall back to localStorage
+      fetch(SHEET_URL + '&t=' + Date.now())
+        .then(function(res) { return res.text(); })
+        .then(function(text) {
+          const lines = text.trim().split('\n').slice(1);
+          const line = lines.find(function(l) { return parseInt(l.split(',')[0]) === roomNum; });
+          if (!line) { renderEntry({}); return; }
+          const parts = line.split(',');
+          renderEntry({
+            name: (parts[1] || '').trim().replace(/^"|"$/g, ''),
+            code: (parts[2] || '').trim().replace(/^"|"$/g, '')
+          });
+        })
+        .catch(function() {
+          const stored = localStorage.getItem('motel_names');
+          const names = stored ? JSON.parse(stored) : [];
+          renderEntry(names.find(function(n) { return n.room === roomNum; }) || {});
+        });
     }
   </script>
 </body>

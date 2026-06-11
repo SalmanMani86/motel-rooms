@@ -356,11 +356,40 @@
       }
     }
 
-    const stored = localStorage.getItem('motel_names');
+    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQQYuU2szQJ_dTDeCSPrRdHmyZFvekxWKbDHT4yW1uhj6-rlXPWJEg6v8NnFe8Ezz344w5GETbHGeiJ/pub?gid=0&single=true&output=csv';
+
     const defaults = Array.from({ length: 10 }, function(_, i) {
-      return { room: i + 1, name: '' };
+      return { room: i + 1, name: '', code: '' };
     });
-    renderRooms(stored ? JSON.parse(stored) : defaults);
+
+    async function loadFromSheets() {
+      try {
+        const res = await fetch(SHEET_URL + '&t=' + Date.now());
+        const text = await res.text();
+        const lines = text.trim().split('\n').slice(1); // skip header row
+        const names = Array.from({ length: 10 }, function(_, i) {
+          const n = i + 1;
+          const line = lines.find(function(l) { return parseInt(l.split(',')[0]) === n; });
+          if (!line) return { room: n, name: '', code: '' };
+          const parts = line.split(',');
+          return {
+            room: n,
+            name: (parts[1] || '').trim().replace(/^"|"$/g, ''),
+            code: (parts[2] || '').trim().replace(/^"|"$/g, '')
+          };
+        });
+        renderRooms(names);
+        // cache locally as fallback
+        localStorage.setItem('motel_names', JSON.stringify(names));
+        localStorage.setItem('motel_updated', new Date().toLocaleString());
+      } catch(e) {
+        // fallback to localStorage if offline
+        const stored = localStorage.getItem('motel_names');
+        renderRooms(stored ? JSON.parse(stored) : defaults);
+      }
+    }
+
+    loadFromSheets();
   </script>
 </body>
 </html>
